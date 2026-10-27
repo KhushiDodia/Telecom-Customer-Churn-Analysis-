@@ -1,0 +1,844 @@
+<!--
+    templates/index.html  —  The Frontend (What user sees in browser)
+    
+    This file contains:
+    1. HTML  → Structure of the page (form, buttons, result section)
+    2. CSS   → Styling (colors, fonts, layout, animations)
+    3. JS    → Interactivity (send form data, show result without page reload)
+-->
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ChurnGuard — Customer Churn Predictor</title>
+
+    <!-- Google Fonts — we use Clash Display + Cabinet Grotesk for a modern feel -->
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=Fira+Code:wght@400;500&display=swap" rel="stylesheet">
+
+    <style>
+        /* ============================================================
+           CSS SECTION
+           This controls how everything LOOKS on the page
+           ============================================================ */
+
+        /* ── CSS Variables (Color Palette) ── */
+        :root {
+            --bg-primary:    #050b18;       /* very dark navy background */
+            --bg-card:       #0d1628;       /* slightly lighter card bg */
+            --bg-input:      #0a1220;       /* input field background */
+            --accent:        #00d4ff;       /* bright cyan accent color */
+            --accent-2:      #00ff88;       /* green for "stay" result */
+            --danger:        #ff4757;       /* red for "churn" result */
+            --warning:       #ffa502;       /* orange for medium risk */
+            --text-primary:  #e8f4fd;       /* main text color */
+            --text-muted:    #4a6080;       /* muted/label text */
+            --border:        rgba(0,212,255,0.15);  /* subtle border */
+            --font:          'Outfit', sans-serif;
+        }
+
+        /* ── Reset & Base ── */
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            font-family: var(--font);
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            min-height: 100vh;
+            /* Animated grid background pattern */
+            background-image:
+                linear-gradient(rgba(0,212,255,0.03) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(0,212,255,0.03) 1px, transparent 1px);
+            background-size: 40px 40px;
+        }
+
+        /* ── Navigation Bar ── */
+        nav {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 20px 48px;
+            border-bottom: 1px solid var(--border);
+            backdrop-filter: blur(10px);
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            background: rgba(5,11,24,0.9);
+        }
+
+        .nav-logo {
+            font-size: 1.3rem;
+            font-weight: 800;
+            color: var(--accent);
+            letter-spacing: -0.5px;
+        }
+
+        .nav-logo span { color: var(--text-primary); }
+
+        .nav-badge {
+            font-family: 'Fira Code', monospace;
+            font-size: 0.72rem;
+            color: var(--accent);
+            background: rgba(0,212,255,0.08);
+            border: 1px solid rgba(0,212,255,0.25);
+            padding: 6px 14px;
+            border-radius: 999px;
+        }
+
+        /* ── Hero Section ── */
+        .hero {
+            text-align: center;
+            padding: 60px 20px 40px;
+            /* Fade-in animation when page loads */
+            animation: fadeUp 0.8s ease both;
+        }
+
+        .hero-tag {
+            display: inline-block;
+            font-family: 'Fira Code', monospace;
+            font-size: 0.75rem;
+            color: var(--accent);
+            background: rgba(0,212,255,0.08);
+            border: 1px solid rgba(0,212,255,0.2);
+            padding: 6px 16px;
+            border-radius: 999px;
+            margin-bottom: 20px;
+            letter-spacing: 1px;
+        }
+
+        .hero h1 {
+            font-size: clamp(2rem, 5vw, 3.5rem);  /* responsive font size */
+            font-weight: 800;
+            line-height: 1.15;
+            letter-spacing: -1px;
+            margin-bottom: 14px;
+        }
+
+        /* Gradient text effect on title */
+        .hero h1 .highlight {
+            background: linear-gradient(135deg, var(--accent), #7c3aed);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .hero p {
+            color: var(--text-muted);
+            font-size: 1rem;
+            max-width: 500px;
+            margin: 0 auto;
+            line-height: 1.7;
+        }
+
+        /* ── Main Container ── */
+        .container {
+            max-width: 1100px;
+            margin: 0 auto;
+            padding: 0 24px 80px;
+        }
+
+        /* ── Section Titles ── */
+        .section-title {
+            font-family: 'Fira Code', monospace;
+            font-size: 0.72rem;
+            color: var(--accent);
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            margin-bottom: 14px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .section-title::after {
+            content: '';
+            flex: 1;
+            height: 1px;
+            background: var(--border);
+        }
+
+        /* ── Cards ── */
+        .card {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 16px;
+            padding: 24px;
+            margin-bottom: 20px;
+            /* Slide-up animation */
+            animation: fadeUp 0.6s ease both;
+        }
+
+        /* ── Form Grid Layout ── */
+        .form-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;   /* 2 equal columns */
+            gap: 16px;
+        }
+
+        /* On small screens, switch to 1 column */
+        @media (max-width: 600px) {
+            .form-grid { grid-template-columns: 1fr; }
+        }
+
+        /* ── Form Groups (label + input) ── */
+        .form-group {
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+        }
+
+        .form-group label {
+            font-size: 0.8rem;
+            color: var(--text-muted);
+            font-weight: 500;
+            letter-spacing: 0.3px;
+        }
+
+        /* ── Input / Select Styling ── */
+        .form-group input,
+        .form-group select {
+            background: var(--bg-input);
+            border: 1px solid rgba(0,212,255,0.12);
+            border-radius: 10px;
+            padding: 11px 14px;
+            color: var(--text-primary);
+            font-family: var(--font);
+            font-size: 0.92rem;
+            transition: border-color 0.2s, box-shadow 0.2s;
+            outline: none;
+            appearance: none;   /* removes default browser styling */
+        }
+
+        /* Glow effect when user clicks an input */
+        .form-group input:focus,
+        .form-group select:focus {
+            border-color: var(--accent);
+            box-shadow: 0 0 0 3px rgba(0,212,255,0.1);
+        }
+
+        /* ── Predict Button ── */
+        .predict-btn {
+            width: 100%;
+            padding: 16px;
+            background: linear-gradient(135deg, var(--accent), #0099cc);
+            border: none;
+            border-radius: 12px;
+            color: #050b18;
+            font-family: var(--font);
+            font-size: 1rem;
+            font-weight: 700;
+            cursor: pointer;
+            letter-spacing: 0.5px;
+            transition: all 0.3s ease;
+            margin-top: 8px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .predict-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 30px rgba(0,212,255,0.35);
+        }
+
+        .predict-btn:active { transform: translateY(0); }
+
+        /* Shimmer animation on button */
+        .predict-btn::after {
+            content: '';
+            position: absolute;
+            top: 0; left: -100%;
+            width: 100%; height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent);
+            transition: left 0.5s;
+        }
+
+        .predict-btn:hover::after { left: 100%; }
+
+        /* ── Loading Spinner ── */
+        .spinner {
+            display: none;          /* hidden by default */
+            width: 20px; height: 20px;
+            border: 2px solid rgba(0,212,255,0.3);
+            border-top-color: var(--accent);
+            border-radius: 50%;
+            animation: spin 0.8s linear infinite;
+            margin: 0 auto;
+        }
+
+        /* ── Result Section ── */
+        #result-section {
+            display: none;           /* hidden until prediction is made */
+            animation: fadeUp 0.6s ease both;
+        }
+
+        /* ── Result Card (Churn or Stay) ── */
+        .result-box {
+            border-radius: 20px;
+            padding: 40px;
+            text-align: center;
+            margin-bottom: 20px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        /* Red glow for churn prediction */
+        .result-churn {
+            background: linear-gradient(135deg, rgba(255,71,87,0.12), rgba(255,71,87,0.05));
+            border: 2px solid rgba(255,71,87,0.5);
+            box-shadow: 0 0 40px rgba(255,71,87,0.15);
+        }
+
+        /* Green glow for stay prediction */
+        .result-stay {
+            background: linear-gradient(135deg, rgba(0,255,136,0.12), rgba(0,255,136,0.05));
+            border: 2px solid rgba(0,255,136,0.5);
+            box-shadow: 0 0 40px rgba(0,255,136,0.15);
+        }
+
+        .result-emoji { font-size: 3rem; margin-bottom: 10px; }
+
+        .result-title {
+            font-size: 2rem;
+            font-weight: 800;
+            letter-spacing: -0.5px;
+            margin-bottom: 6px;
+        }
+
+        .result-subtitle {
+            font-size: 0.9rem;
+            color: var(--text-muted);
+            margin-bottom: 20px;
+        }
+
+        .result-prob {
+            font-size: 4rem;
+            font-weight: 800;
+            font-family: 'Fira Code', monospace;
+            line-height: 1;
+            margin-bottom: 6px;
+        }
+
+        .result-prob-label {
+            font-size: 0.8rem;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        /* Risk badge */
+        .risk-badge {
+            display: inline-block;
+            padding: 6px 20px;
+            border-radius: 999px;
+            font-size: 0.82rem;
+            font-weight: 600;
+            margin-top: 16px;
+        }
+
+        .risk-high   { background: rgba(255,71,87,0.2);  color: #ff4757; border: 1px solid rgba(255,71,87,0.4); }
+        .risk-medium { background: rgba(255,165,2,0.2);  color: #ffa502; border: 1px solid rgba(255,165,2,0.4); }
+        .risk-low    { background: rgba(0,255,136,0.2);  color: #00ff88; border: 1px solid rgba(0,255,136,0.4); }
+
+        /* ── Metric Cards Row ── */
+        .metrics-row {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 14px;
+            margin-bottom: 20px;
+        }
+
+        .metric-card {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 18px;
+            text-align: center;
+        }
+
+        .metric-val {
+            font-size: 1.8rem;
+            font-weight: 800;
+            font-family: 'Fira Code', monospace;
+            color: var(--accent);
+        }
+
+        .metric-lbl {
+            font-size: 0.75rem;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-top: 4px;
+        }
+
+        /* ── Probability Bar ── */
+        .prob-bar-wrap {
+            background: rgba(255,255,255,0.06);
+            border-radius: 999px;
+            height: 8px;
+            margin: 10px 0 4px;
+            overflow: hidden;
+        }
+
+        .prob-bar-fill {
+            height: 100%;
+            border-radius: 999px;
+            transition: width 1s ease;
+        }
+
+        .bar-label {
+            display: flex;
+            justify-content: space-between;
+            font-size: 0.78rem;
+            color: var(--text-muted);
+        }
+
+        /* ── Tips / Recommendations ── */
+        .tips-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+        }
+
+        @media (max-width: 600px) {
+            .tips-grid { grid-template-columns: 1fr; }
+        }
+
+        .tip-item {
+            background: rgba(0,212,255,0.04);
+            border: 1px solid rgba(0,212,255,0.12);
+            border-left: 3px solid var(--accent);
+            border-radius: 0 10px 10px 0;
+            padding: 12px 16px;
+            font-size: 0.88rem;
+            color: #a0c4d8;
+            line-height: 1.5;
+        }
+
+        /* ── Animations ── */
+        @keyframes fadeUp {
+            from { opacity: 0; transform: translateY(20px); }
+            to   { opacity: 1; transform: translateY(0); }
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        /* Staggered card animations */
+        .card:nth-child(1) { animation-delay: 0.1s; }
+        .card:nth-child(2) { animation-delay: 0.2s; }
+        .card:nth-child(3) { animation-delay: 0.3s; }
+
+        /* ── Scrollbar Styling ── */
+        ::-webkit-scrollbar { width: 6px; }
+        ::-webkit-scrollbar-track { background: var(--bg-primary); }
+        ::-webkit-scrollbar-thumb { background: rgba(0,212,255,0.3); border-radius: 3px; }
+
+    </style>
+</head>
+
+<body>
+
+    <!-- ============================================================
+         NAVIGATION BAR
+         ============================================================ -->
+    <nav>
+        <div class="nav-logo">Churn<span>Guard</span></div>
+        <div class="nav-badge">⚡ Random Forest · 78.89% Accuracy</div>
+    </nav>
+
+
+    <!-- ============================================================
+         HERO SECTION
+         ============================================================ -->
+    <div class="hero">
+        <div class="hero-tag">// Telecom Churn Analysis · ML Project</div>
+        <h1>Predict Customer <span class="highlight">Churn</span><br>Before It Happens</h1>
+        <p>Enter customer details below. Our AI model will instantly tell you if a customer is at risk of leaving.</p>
+    </div>
+
+
+    <!-- ============================================================
+         MAIN FORM
+         ============================================================ -->
+    <div class="container">
+
+        <!-- ── Customer Profile Card ── -->
+        <div class="card">
+            <div class="section-title">01 · Customer Profile</div>
+            <div class="form-grid">
+
+                <div class="form-group">
+                    <label>Gender</label>
+                    <select name="gender" id="gender">
+                        <option value="Male">Male</option>
+                        <option value="Female">Female</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label>Senior Citizen</label>
+                    <select name="SeniorCitizen" id="SeniorCitizen">
+                        <option value="0">No</option>
+                        <option value="1">Yes</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label>Partner</label>
+                    <select name="Partner" id="Partner">
+                        <option value="Yes">Yes</option>
+                        <option value="No">No</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label>Dependents</label>
+                    <select name="Dependents" id="Dependents">
+                        <option value="No">No</option>
+                        <option value="Yes">Yes</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label>Tenure (months)</label>
+                    <!-- oninput updates the display value next to slider -->
+                    <input type="range" name="tenure" id="tenure" min="0" max="72" value="12"
+                           oninput="document.getElementById('tenure_val').textContent = this.value + ' months'">
+                    <span id="tenure_val" style="font-size:0.8rem; color:var(--accent); font-family:'Fira Code',monospace;">12 months</span>
+                </div>
+
+                <div class="form-group">
+                    <label>Phone Service</label>
+                    <select name="PhoneService" id="PhoneService">
+                        <option value="Yes">Yes</option>
+                        <option value="No">No</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label>Multiple Lines</label>
+                    <select name="MultipleLines" id="MultipleLines">
+                        <option value="No">No</option>
+                        <option value="Yes">Yes</option>
+                        <option value="No phone service">No phone service</option>
+                    </select>
+                </div>
+
+            </div>
+        </div>
+
+
+        <!-- ── Services Card ── -->
+        <div class="card">
+            <div class="section-title">02 · Internet &amp; Services</div>
+            <div class="form-grid">
+
+                <div class="form-group">
+                    <label>Internet Service</label>
+                    <select name="InternetService" id="InternetService">
+                        <option value="DSL">DSL</option>
+                        <option value="Fiber optic">Fiber optic</option>
+                        <option value="No">No Internet</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label>Online Security</label>
+                    <select name="OnlineSecurity" id="OnlineSecurity">
+                        <option value="No">No</option>
+                        <option value="Yes">Yes</option>
+                        <option value="No internet service">No internet service</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label>Online Backup</label>
+                    <select name="OnlineBackup" id="OnlineBackup">
+                        <option value="Yes">Yes</option>
+                        <option value="No">No</option>
+                        <option value="No internet service">No internet service</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label>Device Protection</label>
+                    <select name="DeviceProtection" id="DeviceProtection">
+                        <option value="No">No</option>
+                        <option value="Yes">Yes</option>
+                        <option value="No internet service">No internet service</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label>Tech Support</label>
+                    <select name="TechSupport" id="TechSupport">
+                        <option value="No">No</option>
+                        <option value="Yes">Yes</option>
+                        <option value="No internet service">No internet service</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label>Streaming TV</label>
+                    <select name="StreamingTV" id="StreamingTV">
+                        <option value="No">No</option>
+                        <option value="Yes">Yes</option>
+                        <option value="No internet service">No internet service</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label>Streaming Movies</label>
+                    <select name="StreamingMovies" id="StreamingMovies">
+                        <option value="No">No</option>
+                        <option value="Yes">Yes</option>
+                        <option value="No internet service">No internet service</option>
+                    </select>
+                </div>
+
+            </div>
+        </div>
+
+
+        <!-- ── Billing Card ── -->
+        <div class="card">
+            <div class="section-title">03 · Contract &amp; Billing</div>
+            <div class="form-grid">
+
+                <div class="form-group">
+                    <label>Contract Type</label>
+                    <select name="Contract" id="Contract">
+                        <option value="Month-to-month">Month-to-month</option>
+                        <option value="One year">One year</option>
+                        <option value="Two year">Two year</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label>Paperless Billing</label>
+                    <select name="PaperlessBilling" id="PaperlessBilling">
+                        <option value="Yes">Yes</option>
+                        <option value="No">No</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label>Payment Method</label>
+                    <select name="PaymentMethod" id="PaymentMethod">
+                        <option value="Electronic check">Electronic check</option>
+                        <option value="Mailed check">Mailed check</option>
+                        <option value="Bank transfer (automatic)">Bank transfer (automatic)</option>
+                        <option value="Credit card (automatic)">Credit card (automatic)</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label>Monthly Charges ($)</label>
+                    <input type="number" name="MonthlyCharges" id="MonthlyCharges"
+                           value="65" min="0" max="150" step="0.5"
+                           placeholder="e.g. 65.00">
+                </div>
+
+                <div class="form-group">
+                    <label>Total Charges ($)</label>
+                    <input type="number" name="TotalCharges" id="TotalCharges"
+                           value="780" min="0" max="9000" step="1"
+                           placeholder="e.g. 780.00">
+                </div>
+
+            </div>
+
+            <!-- ── Predict Button ── -->
+            <button class="predict-btn" onclick="predict()">
+                <span id="btn-text">🔮 &nbsp; Predict Churn</span>
+                <div class="spinner" id="spinner"></div>
+            </button>
+        </div>
+
+
+        <!-- ============================================================
+             RESULT SECTION
+             Hidden by default. Shown after prediction.
+             ============================================================ -->
+        <div id="result-section">
+
+            <!-- Main result box (churn or stay) -->
+            <div id="result-box" class="result-box">
+                <div class="result-emoji" id="result-emoji"></div>
+                <div class="result-title" id="result-title"></div>
+                <div class="result-subtitle" id="result-subtitle"></div>
+                <div class="result-prob"  id="result-prob"></div>
+                <div class="result-prob-label" id="result-prob-label"></div>
+                <div id="risk-badge" class="risk-badge"></div>
+            </div>
+
+            <!-- Metrics row -->
+            <div class="metrics-row">
+                <div class="metric-card">
+                    <div class="metric-val" id="m-stay"></div>
+                    <div class="metric-lbl">Stay Probability</div>
+                </div>
+                <div class="metric-card">
+                    <div class="metric-val" id="m-churn"></div>
+                    <div class="metric-lbl">Churn Probability</div>
+                </div>
+                <div class="metric-card">
+                    <div class="metric-val" id="m-risk"></div>
+                    <div class="metric-lbl">Risk Level</div>
+                </div>
+            </div>
+
+            <!-- Probability bar -->
+            <div class="card">
+                <div class="section-title">Probability Breakdown</div>
+                <div class="bar-label">
+                    <span>Will Stay</span>
+                    <span id="bar-stay-val"></span>
+                </div>
+                <div class="prob-bar-wrap">
+                    <div class="prob-bar-fill" id="bar-stay"
+                         style="background: linear-gradient(90deg,#00ff88,#00cc66); width:0%;"></div>
+                </div>
+                <div class="bar-label" style="margin-top:10px;">
+                    <span>Will Churn</span>
+                    <span id="bar-churn-val"></span>
+                </div>
+                <div class="prob-bar-wrap">
+                    <div class="prob-bar-fill" id="bar-churn"
+                         style="background: linear-gradient(90deg,#ff4757,#cc0011); width:0%;"></div>
+                </div>
+            </div>
+
+            <!-- Recommendations (only shown for churn) -->
+            <div id="tips-section" class="card" style="display:none;">
+                <div class="section-title">💡 Retention Recommendations</div>
+                <div class="tips-grid" id="tips-grid"></div>
+            </div>
+
+        </div>
+
+    </div><!-- end container -->
+
+
+    <!-- ============================================================
+         JAVASCRIPT SECTION
+         This is what makes the page interactive!
+         When user clicks Predict:
+         1. Collect all form values
+         2. Send to Flask backend (/predict)
+         3. Receive result
+         4. Update the page with result (without reloading!)
+         ============================================================ -->
+    <script>
+
+        async function predict() {
+            // ── Step 1: Show loading spinner, hide button text ──
+            document.getElementById('btn-text').style.display = 'none';
+            document.getElementById('spinner').style.display  = 'block';
+
+            // ── Step 2: Collect all form field values ────────────
+            // FormData automatically grabs all input/select values by name
+            const formData = new FormData();
+
+            const fields = [
+                'gender','SeniorCitizen','Partner','Dependents','tenure',
+                'PhoneService','MultipleLines','InternetService',
+                'OnlineSecurity','OnlineBackup','DeviceProtection',
+                'TechSupport','StreamingTV','StreamingMovies',
+                'Contract','PaperlessBilling','PaymentMethod',
+                'MonthlyCharges','TotalCharges'
+            ];
+
+            fields.forEach(field => {
+                const el = document.getElementById(field);
+                if (el) formData.append(field, el.value);
+            });
+
+            // ── Step 3: Send data to Flask backend ───────────────
+            // fetch() sends a POST request to /predict
+            // We don't reload the page — this is called AJAX!
+            const response = await fetch('/predict', {
+                method: 'POST',
+                body: formData       // sends all form values
+            });
+
+            // ── Step 4: Parse the JSON response from Flask ────────
+            const result = await response.json();
+            // result = { prediction, churn_prob, stay_prob, risk, tips }
+
+            // ── Step 5: Hide spinner, show button text again ──────
+            document.getElementById('btn-text').style.display = 'inline';
+            document.getElementById('spinner').style.display  = 'none';
+
+            // ── Step 6: Show result section ───────────────────────
+            const resultSection = document.getElementById('result-section');
+            resultSection.style.display = 'block';
+
+            // Smooth scroll to result
+            resultSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
+
+            // ── Step 7: Update the result box ─────────────────────
+            const box = document.getElementById('result-box');
+
+            if (result.prediction === 1) {
+                // ── CHURN PREDICTION ──
+                box.className = 'result-box result-churn';
+                document.getElementById('result-emoji').textContent   = '⚠️';
+                document.getElementById('result-title').textContent   = 'Customer Will CHURN';
+                document.getElementById('result-title').style.color   = '#ff4757';
+                document.getElementById('result-subtitle').textContent = 'This customer is at risk of leaving';
+                document.getElementById('result-prob').textContent    = result.churn_prob + '%';
+                document.getElementById('result-prob').style.color    = '#ff4757';
+                document.getElementById('result-prob-label').textContent = 'Churn Probability';
+            } else {
+                // ── STAY PREDICTION ──
+                box.className = 'result-box result-stay';
+                document.getElementById('result-emoji').textContent   = '✅';
+                document.getElementById('result-title').textContent   = 'Customer Will STAY';
+                document.getElementById('result-title').style.color   = '#00ff88';
+                document.getElementById('result-subtitle').textContent = 'This customer is likely to remain';
+                document.getElementById('result-prob').textContent    = result.stay_prob + '%';
+                document.getElementById('result-prob').style.color    = '#00ff88';
+                document.getElementById('result-prob-label').textContent = 'Retention Probability';
+            }
+
+            // ── Step 8: Update risk badge ──────────────────────────
+            const badge = document.getElementById('risk-badge');
+            badge.textContent = result.risk;
+            badge.className   = 'risk-badge risk-' + result.risk.split(' ')[0].toLowerCase();
+
+            // ── Step 9: Update metric cards ────────────────────────
+            document.getElementById('m-stay').textContent  = result.stay_prob  + '%';
+            document.getElementById('m-churn').textContent = result.churn_prob + '%';
+            document.getElementById('m-risk').textContent  = result.risk.split(' ')[0];
+
+            // ── Step 10: Animate probability bars ─────────────────
+            document.getElementById('bar-stay-val').textContent  = result.stay_prob  + '%';
+            document.getElementById('bar-churn-val').textContent = result.churn_prob + '%';
+
+            // Small delay so animation is visible
+            setTimeout(() => {
+                document.getElementById('bar-stay').style.width  = result.stay_prob  + '%';
+                document.getElementById('bar-churn').style.width = result.churn_prob + '%';
+            }, 100);
+
+            // ── Step 11: Show recommendations (only for churn) ────
+            const tipsSection = document.getElementById('tips-section');
+            const tipsGrid    = document.getElementById('tips-grid');
+
+            if (result.prediction === 1 && result.tips.length > 0) {
+                tipsSection.style.display = 'block';
+                tipsGrid.innerHTML = '';    // clear old tips
+                result.tips.forEach(tip => {
+                    tipsGrid.innerHTML += `<div class="tip-item">💡 ${tip}</div>`;
+                });
+            } else {
+                tipsSection.style.display = 'none';
+            }
+        }
+
+    </script>
+
+</body>
+</html>
